@@ -2,6 +2,7 @@ import type { Paragraph, Parent, Root } from 'mdast'
 import { type BuildVisitor, visit } from 'unist-util-visit'
 import { fullTagRegex, tagRegex } from '../constants'
 import type { NotUndefined } from '../types'
+import path from 'node:path'
 
 /**
  * Creates a remark plugin that either removes or unwraps specified HTML tags from markdown AST.
@@ -124,4 +125,22 @@ export function remarkPlease(intent: 'remove' | 'unwrap', tag: string) {
 
 		return tree
 	}
+}
+
+/**
+ * Creates a remark plugin that replaces image URLs with their hashed equivalents.
+ *
+ * @param map - Map of original image file names to hashed file paths.
+ * @returns A remark plugin that rewrites image URLs.
+ */
+export function remarkReplaceImageUrls(map: Map<string, string>) {
+        return () => (tree: Root) => {
+                visit(tree, 'image', (node) => {
+                        const original = path.posix.basename(node.url)
+                        const hashed = map.get(original)
+                        if (hashed) {
+                                node.url = `/${hashed}`
+                        }
+                })
+        }
 }
