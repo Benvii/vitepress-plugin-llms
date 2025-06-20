@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from 'bun:test'
 import { remark } from 'remark'
-import { remarkPlease } from '../../src/helpers/markdown'
+import { remarkPlease, remarkReplaceImageUrls } from '../../src/helpers/markdown'
 
 describe('remarkPlease', () => {
 	let remarkProcessor: typeof remark
@@ -68,16 +68,26 @@ describe('remarkPlease', () => {
 			expect(result).toBeEmpty()
 		})
 
-		it('should remove multiple blocks', async () => {
-			const testString =
-				'<llm-exclude>First block to remove</llm-exclude>\n\nKeep this content\n\n<llm-exclude>Second block to remove</llm-exclude>\n\n<llm-exclude>Third block to remove</llm-exclude>'
+                it('should remove multiple blocks', async () => {
+                        const testString =
+                                '<llm-exclude>First block to remove</llm-exclude>\n\nKeep this content\n\n<llm-exclude>Second block to remove</llm-exclude>\n\n<llm-exclude>Third block to remove</llm-exclude>'
 
 			remarkProcessor.use(remarkPlease('remove', 'llm-exclude'))
 
 			const file = await remarkProcessor.process(testString)
 			const result = String(file)
 
-			expect(result).toBe('Keep this content\n')
-		})
-	})
+                        expect(result).toBe('Keep this content\n')
+                })
+        })
+})
+
+describe('remarkReplaceImageUrls', () => {
+        it('replaces image links with hashed paths', async () => {
+                const processor = remark().use(
+                        remarkReplaceImageUrls(new Map([['vs_code_proxy.png', 'assets/vs_code_proxy.hash.png']])),
+                )
+                const file = await processor.process('![alt](@/../assets/vs_code_proxy.png)')
+                expect(String(file)).toContain('/assets/vs_code_proxy.hash.png')
+        })
 })
